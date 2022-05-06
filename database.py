@@ -144,6 +144,7 @@ class DataBase():
         except sqlite3.Error as error:
             if Connection:
                 Connection.close();
+                return 0;
                 # print("Conexão com SQLite está fechada");
     
     def update(self,id_user:str='',codigo:str='',comando:str='',mensagem:str='') -> bool:
