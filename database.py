@@ -3,6 +3,7 @@
 #-----------------------
 import os
 import sqlite3
+from datetime import datetime
 #-----------------------
 # CLASSES
 #-----------------------
@@ -36,7 +37,7 @@ class DataBase():
         if(comando == ''):
             comando =   """ CREATE TABLE IF NOT EXISTS encomenda(
                             id              INTEGER primary key autoincrement,
-                            id_user         INTEGER NOT NULL,
+                            id_user         TEXT NOT NULL,
                             codigo          TEXT NOT NULL,
                             nome_rastreio   TEXT,
                             data            TEXT NOT NULL,
@@ -48,17 +49,16 @@ class DataBase():
             cursor = Connection.cursor();
             cursor.execute(comando);
             Connection.commit();
-            print("Comando efetuado com sucesso", cursor.rowcount);
+            # print("Comando efetuado com sucesso", cursor.rowcount);
             cursor.close();
         except sqlite3.Error as error:
             print("Falha do comando", error);
         finally:
             if Connection:
                 Connection.close();
-                print("Conexão com SQLite está fechada");
+                # print("Conexão com SQLite está fechada");
 
     def verifica(self,comando:str='',id_user:str='',codigo:str='')->bool:
-        print(id_user,codigo);
         if(id_user == '' or codigo == ''):
             return False;
         if(comando == ''):
@@ -71,9 +71,9 @@ class DataBase():
             self.conexao();
             Connection = self.connection;
             cursor = Connection.cursor();
-            print("Conexão com SQLite efetuada com sucesso");
+            # print("Conexão com SQLite efetuada com sucesso");
             cursor.execute(comando);
-            print("Comando efetuado com sucesso", cursor.rowcount);
+            # print("Comando efetuado com sucesso", cursor.rowcount);
             if cursor.fetchall() != []:
                 cursor.close();
                 return True;
@@ -84,7 +84,7 @@ class DataBase():
         finally:
             if Connection:
                 Connection.close();
-                print("Conexão com SQLite está fechada");
+                # print("Conexão com SQLite está fechada");
     
     def insert(self,comando:str='',comando_tuple=[]) -> None:
         if(comando == ''):
@@ -101,19 +101,52 @@ class DataBase():
             self.conexao();
             Connection = self.connection;
             cursor = Connection.cursor();
-            print("Conexão com SQLite efetuada com sucesso");
+            # print("Conexão com SQLite efetuada com sucesso");
             cursor.execute(comando, comando_tuple);
             Connection.commit();
-            print("Comando efetuado com sucesso", cursor.rowcount);
+            # print("Comando efetuado com sucesso", cursor.rowcount);
             cursor.close();
         except sqlite3.Error as error:
             print("Falha do comando", error);
         finally:
             if Connection:
                 Connection.close();
-                print("Conexão com SQLite está fechada");
+                # print("Conexão com SQLite está fechada");
 
-    def upadate(self,id_user:str='',codigo:str='',comando:str='',mensagem:str='') -> bool:
+    def dif_minutos(self,date1):
+        data_agora = datetime.now();
+        date2      = data_agora.strftime('%Y-%m-%d %H:%M:%S');
+        d1         = datetime.strptime(date1, '%Y-%m-%d %H:%M:%S');
+        d2         = datetime.strptime(date2, '%Y-%m-%d %H:%M:%S');
+        resultado  = d2-d1;
+        minutes    = resultado.total_seconds() / 60;
+        minutes    = int(minutes);
+        return abs(minutes);
+
+    def validar(self,comando:str=''):
+        if(comando == ''):
+            comando =   f'SELECT data FROM encomenda ORDER BY data LIMIT 1';
+        try:
+            self.conexao();
+            Connection = self.connection;
+            cursor = Connection.cursor();
+            # print("Conexão com SQLite efetuada com sucesso");
+            cursor.execute(comando);
+            data = cursor.fetchall();
+            # print("Comando efetuado com sucesso", cursor.rowcount);
+            if data != []:
+                data = str(data[0][0]);
+                data = self.dif_minutos(data);
+                cursor.close();
+                return data;
+            cursor.close();
+            return 0;
+        except sqlite3.Error as error:
+            if Connection:
+                Connection.close();
+                # print("Conexão com SQLite está fechada");
+    
+    def update(self,id_user:str='',codigo:str='',comando:str='',mensagem:str='') -> bool:
         if(comando == ''):
             comando =   f""" UPDATE encomenda
                             SET 'data'=(SELECT DATETIME('now','localtime')), 
@@ -124,21 +157,22 @@ class DataBase():
             self.conexao();
             Connection = self.connection;
             cursor = Connection.cursor();
-            print("Conexão com SQLite efetuada com sucesso");
+            # print("Conexão com SQLite efetuada com sucesso");
             cursor.execute(comando);
             Connection.commit();
-            print("Comando efetuado com sucesso", cursor.rowcount);
+            # print("Comando efetuado com sucesso", cursor.rowcount);
             cursor.close();
         except sqlite3.Error as error:
             print("Falha do comando", error);
         finally:
             if Connection:
                 Connection.close();
-                print("Conexão com SQLite está fechada");
+                # print("Conexão com SQLite está fechada");
 #-----------------------
 # MAIN()
 #-----------------------
 if(__name__ == "__main__"):
     db = DataBase();
     db.creat_table();
+    db.validar()
 #-----------------------
