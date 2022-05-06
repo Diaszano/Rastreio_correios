@@ -90,12 +90,12 @@ class Rastreio:
 #-----------------------    
 if __name__ == '__main__':
     correios = Rastreio()
-    resposta = correios.rastrear('LB526033530HK');
-    tupla = ('05','LB526033530HK','Celular',resposta)
+    resposta = correios.rastrear('');
+    tupla = ('05','','Celular',resposta)
     #       ('id_user','codigo','nome_rastreio','data','informacoes');
     print(resposta);
     db = DataBase();
     db.creat_table();
     db.insert(comando_tuple=tupla);
-    # db.upadate(id_user='05',codigo='LB526033530HK',mensagem=resposta)
+    # db.upadate(id_user='05',codigo='',mensagem=resposta)
 #-----------------------    
