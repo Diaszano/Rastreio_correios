@@ -135,30 +135,6 @@ class DataBase():
             if Connection:
                 Connection.close();
                 print("Conexão com SQLite está fechada");
-    
-    def delete(self,id_user:str='',codigo:str='') -> bool:
-        if(comando == ''):
-            comando =   """ INSERT INTO SqliteDb_developers
-                            (id, name, email, joining_date, salary) 
-                            VALUES (?, ?, ?, ?, ?);
-                        """;
-        if(comando_tuple == []):
-            comando_tuple = ('id', 'name', 'email', 'joinDate', 'salary');
-        try:
-            self.conexao();
-            Connection = self.connection;
-            cursor = Connection.cursor();
-            print("Conexão com SQLite efetuada com sucesso");
-            cursor.execute(comando, comando_tuple);
-            Connection.commit();
-            print("Comando efetuado com sucesso", cursor.rowcount);
-            cursor.close();
-        except sqlite3.Error as error:
-            print("Falha do comando", error);
-        finally:
-            if Connection:
-                Connection.close();
-                print("Conexão com SQLite está fechada");
 #-----------------------
 # MAIN()
 #-----------------------
