@@ -123,6 +123,32 @@ class DataBase():
         minutes    = int(minutes);
         return abs(minutes);
 
+    def select(self,comando:str=''):
+        if(comando == ''):
+            comando =   f'SELECT id_user, codigo, informacoes, nome_rastreio FROM encomenda ORDER BY data LIMIT 1';
+        try:
+            self.conexao();
+            Connection = self.connection;
+            cursor = Connection.cursor();
+            # print("Conexão com SQLite efetuada com sucesso");
+            cursor.execute(comando);
+            data = cursor.fetchall();
+            # print("Comando efetuado com sucesso", cursor.rowcount);
+            if data != []:
+                id_user = str(data[0][0]);
+                codigo  = str(data[0][1]);
+                info    = str(data[0][2]);
+                nome    = str(data[0][3]);
+                cursor.close();
+                return [id_user,codigo,info,nome];
+            cursor.close();
+            return [];
+        except sqlite3.Error as error:
+            if Connection:
+                Connection.close();
+                return [];
+                # print("Conexão com SQLite está fechada");
+
     def validar(self,comando:str=''):
         if(comando == ''):
             comando =   f'SELECT data FROM encomenda ORDER BY data LIMIT 1';
