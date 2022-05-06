@@ -8,7 +8,7 @@ from database import DataBase
 # CLASSES
 #-----------------------
 class Rastreio:
-    def __init__(self):
+    def __init__(self)->None:
         pass;
     def rastrear(self,codigo:str='')->str:
         if(len(codigo) != 13):
@@ -87,7 +87,7 @@ class Rastreio:
         return mensagem;
 #-----------------------
 # Main()
-#-----------------------    
+#----------------------- 
 if __name__ == '__main__':
     correios = Rastreio()
     resposta = correios.rastrear('');
