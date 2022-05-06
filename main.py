@@ -7,7 +7,7 @@ from database import DataBase
 #-----------------------
 # CLASSES
 #-----------------------
-class rastreio:
+class Rastreio:
     def __init__(self):
         pass;
     def rastrear(self,codigo:str='')->str:
@@ -89,7 +89,7 @@ class rastreio:
 # Main()
 #-----------------------    
 if __name__ == '__main__':
-    correios = rastreio()
+    correios = Rastreio()
     resposta = correios.rastrear('LB526033530HK');
     tupla = ('05','LB526033530HK','Celular',resposta)
     #       ('id_user','codigo','nome_rastreio','data','informacoes');
