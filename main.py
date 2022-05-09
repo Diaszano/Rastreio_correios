@@ -1,101 +1,149 @@
 #-----------------------
 # BIBLIOTECAS
 #-----------------------
-import re
-import requests
-from database import DataBase
+import os
+import sys
+import time
+import threading
+from database import *
+from rastreio_correios import *
 #-----------------------
-# CLASSES
+# CONSTANTES
 #-----------------------
-class Rastreio:
-    def __init__(self)->None:
-        pass;
-    def rastrear(self,codigo:str='')->str:
-        if(len(codigo) != 13):
-            return '';
-        codigo = re.findall(r'(?P<Codigo>[a-z]{2}[0-9]{9}[a-z]{2})',codigo,re.MULTILINE | re.IGNORECASE);
-        if(codigo != []):
-            codigo = codigo[0];
-            url         = f'https://proxyapp.correios.com.br/v1/sro-rastro/{codigo}';
-            informacoes = requests.get(url);
-            informacoes = str(informacoes.text);
-            informacoes = re.findall(r'(?P<Eventos>\"eventos\"\:)(?P<Dados_Eventos>\[.*?\])', informacoes, re.MULTILINE | re.IGNORECASE);
-            if informacoes != []:
-                informacoes = str(informacoes);
-                informacoes = re.findall(r'(?P<Eventos>\{\"codigo\"\:.*?\.png\"\})*', informacoes, re.MULTILINE | re.IGNORECASE);
-                informacoes = [valor for valor in informacoes if valor != ''];
-                informacoes = self.limparMensagem(eventos=informacoes);
-                return informacoes;
-        return '';
-    
-    def limparMensagem(self,eventos:list = []) -> list:
-        rastreio = '';
-        for resultado in eventos:
-            dia       = '';
-            tipo      = '';
-            local     = '';
-            destino   = '';
-            detalhe   = '';
-            descricao = '';
-            if 'descricao' in resultado:
-                temp      = re.findall('((\"descricao\"\:)(\".*?\"))', resultado, re.MULTILINE | re.IGNORECASE);
-                temp      = str(temp[0][2]);
-                temp      = temp.replace('"','');
-                descricao = temp;
-            if 'detalhe' in resultado:
-                temp    = re.findall('((\"detalhe\"\:)(\".*?\"))', resultado, re.MULTILINE | re.IGNORECASE);
-                temp    = temp[0][2];
-                temp    = temp.replace('"','');
-                detalhe = f'\n{temp}';
-            if 'dtHrCriado' in resultado:
-                temp = re.findall('((\"dtHrCriado\"\:)(\".*?\"))', resultado, re.MULTILINE | re.IGNORECASE);
-                temp = temp[0][2]
-                temp = temp.replace('"','');
-                dia  = temp;
-            if 'tipo' in resultado:
-                tipo = re.findall('((\"tipo\"\:)(\"[^0-9]*?\"))', resultado, re.MULTILINE | re.IGNORECASE);
-                if tipo != []:
-                    temp = re.findall('(?:\"unidade\"\:\{\"endereco\"\:\{"cidade"\:)(\".*?\"),(?:\"uf\"\:)(\".*?\")', resultado, re.MULTILINE | re.IGNORECASE);
-                    if temp != []:
-                        temp        = temp[0];
-                        [cidade,uf] = [temp[0],temp[1]];
-                        uf          = uf.replace('"','');
-                        cidade      = cidade.replace('"','');
-                        local       = f'[{cidade}/{uf}]';
-                    else:
-                        temp  = re.findall('(?:\"unidade\"\:\{\"codSro\"\:\".*?\"(?:\,)\"endereco\"\:\{\}\,\"nome"\:)(\".*?\")', resultado, re.MULTILINE | re.IGNORECASE);
-                        if temp != []:
-                            temp  = temp[0].replace('"','');
-                            local = f'[{temp}]';
-            if '' in resultado:
-                temp  = re.findall('(?:\"unidadeDestino\"\:\{\"endereco\"\:\{\"cidade\":)(\".*?\")(?:,\"uf\"\:)(\".*?\")', resultado, re.MULTILINE | re.IGNORECASE);
-                if temp != []:
-                    temp        = temp[0];
-                    [cidade,uf] = [temp[0],temp[1]];
-                    uf          = uf.replace('"','');
-                    cidade      = cidade.replace('"','');
-                    destino     = f' para [{cidade}/{uf}]';
-            rastreio += f'[{self.limpaData(dia)}] - {descricao} {local}{destino}{detalhe}\n\n\n';
-        return rastreio;
+ID_USER = 'User';
+TEMPO_MAXIMO = 2;
+#-----------------------
+# FUNÇÕES
+#-----------------------
+def pausar_tela()->None:
+    mensagem = f"\nDigite o enter para continuar!\n";
+    input(mensagem);
 
-    def limpaData(self,data:str='')->str:
-        ano      = data[:4];
-        mes      = data[5:7];
-        dia      = data[8:10];
-        hora     = data[11:];
-        mensagem = f"{dia}/{mes}/{ano} - {hora}";
-        return mensagem;
+def limpar_tela()->None:
+    os.system("clear || cls");
+
+def scanf_int(mensagem:str='')->int:
+    limpar_tela();
+    valor = input(mensagem);
+    if not(valor.isdigit()):
+        valor = scanf_int(mensagem=mensagem);
+    return int(valor);
+
+def scanf_str(mensagem:str='')->str:
+    limpar_tela();
+    valor = input(mensagem);
+    if valor == '':
+        valor = scanf_str(mensagem=mensagem);
+    return str(valor);
+
+def banco(db:DataBase=DataBase(),rastreador:Rastreio=Rastreio())->None:
+    while True:
+        if(db.validar_rastreio() >= TEMPO_MAXIMO):
+            dados = db.atualiza_rastreio();
+            if(dados != []):
+                id_user = dados[0];
+                codigo  = dados[1];
+                informacoes = rastreador.rastrear(codigo=codigo);
+                db.update_rastreio(id_user=id_user,codigo=codigo,informacoes=informacoes);
+        elif(db.validar_rastreio() == 0):
+            tempo_de_espera = TEMPO_MAXIMO * 60;
+            tempo_de_espera = int(tempo_de_espera);
+            # print(f"Tempo de espera = {tempo/60}");
+            for _ in range(tempo_de_espera):
+                time.sleep(1);
+        else:
+            tempo = TEMPO_MAXIMO * 60;
+            tempo_de_espera = tempo - (db.validar_rastreio() * 60);
+            tempo_de_espera = int(tempo_de_espera);
+            # print(f"Tempo de espera = {tempo_de_espera/60}");
+            for _ in range(tempo_de_espera):
+                time.sleep(1);
+
+def menu(rastreador:Rastreio=Rastreio(),db:DataBase=DataBase())->None:
+    while True:
+        opcao = 0;
+        menu_print = (   "Opções de uso:"
+                        "\n[1] - Rastrear encomenda"
+                        "\n[2] - Listar encomendas"
+                        "\n[3] - Deletar encomenda"
+                        "\n[4] - Sair"
+                        "\nSua opção: "
+                    );
+        while(opcao < 1 or opcao > 4):
+            opcao = scanf_int(mensagem=menu_print);
+        
+        if(opcao == 1):
+            codigo = [];
+            while(codigo == []):
+                mensagem = "Digite o código de rastreio ou -1 para sair: ";
+                codigo   = scanf_str(mensagem=mensagem);
+                if(codigo == '-1'):
+                    menu(rastreador=rastreador,db=db);
+                codigo   = re.findall(r'(?P<Codigo>[a-z]{2}[0-9]{9}[a-z]{2})',codigo,re.MULTILINE | re.IGNORECASE);
+                if codigo != []:
+                    codigo   = str(codigo[0]).upper();
+            mensagem = "Digite o nome do rastreio: ";
+            nome     = scanf_str(mensagem=mensagem);
+            informacoes = rastreador.rastrear(codigo=codigo);
+            tupla = (ID_USER,codigo,nome,informacoes);
+            db.insert_rastreio(tupla=tupla);
+        elif(opcao == 2):
+            menu_print = (  "Opções de uso:"
+                            "\n[1] - Mostar todas as informações"
+                            "\n[2] - Mostar codigo e nome do rastreio"
+                            "\nSua opção: "
+                        );
+            opcao = 0;
+            while(opcao < 1 or opcao > 2):
+                opcao = scanf_int(mensagem=menu_print);
+                limpar_tela();
+            resposta = f"Tu tens 📦 {len(db.select_rastreio(id_user=ID_USER))} encomendas guardadas\n";
+            if(opcao == 1):
+                resposta += f"#-----------------------#\n";
+                for informacoes, nome in db.select_rastreio(id_user=ID_USER):
+                    resposta += f"{informacoes} {nome}\n";
+                    resposta += f"#-----------------------#\n";
+            else:
+                comando = f"SELECT codigo, nome_rastreio FROM encomenda WHERE id_user='{ID_USER}' ORDER BY id";
+                for informacoes, nome in db.select_rastreio(comando=comando):
+                    resposta += f"📦 {informacoes} {nome}\n";
+            print(resposta);
+            pausar_tela();
+        elif(opcao == 3):
+            codigo = [];
+            resposta = '';
+            while(codigo == []):
+                mensagem = "Digite o código de rastreio ou -1 para sair: ";
+                codigo   = scanf_str(mensagem=mensagem);
+                if(codigo == '-1'):
+                    menu(rastreador=rastreador,db=db);
+                codigo   = re.findall(r'(?P<Codigo>[a-z]{2}[0-9]{9}[a-z]{2})',codigo,re.MULTILINE | re.IGNORECASE);
+                if codigo != []:
+                    codigo   = str(codigo[0]).upper();
+                
+            if(db.verifica_rastreio(id_user=ID_USER,codigo=codigo)):
+                db.delete_rastreio(id_user=ID_USER,codigo=codigo);
+                resposta = f"Encomenda Deletada";
+            else:
+                resposta = f"Dados Inválidos";
+            print(resposta);
+            pausar_tela();
+        elif(opcao == 4):
+            limpar_tela();
+            return;
 #-----------------------
 # Main()
 #----------------------- 
 if __name__ == '__main__':
-    correios = Rastreio()
-    resposta = correios.rastrear('');
-    tupla = ('05','','Celular',resposta)
-    #       ('id_user','codigo','nome_rastreio','data','informacoes');
-    print(resposta);
-    db = DataBase();
-    db.creat_table();
-    db.insert(comando_tuple=tupla);
-    # db.upadate(id_user='05',codigo='',mensagem=resposta)
-#-----------------------    
+    db          = DataBase();
+    rastreador  = Rastreio();
+
+    thread_banco = threading.Thread(target=banco, args=(db,rastreador,),daemon=True);
+    thread_app   = threading.Thread(target=menu, args=(rastreador,db,));
+    # Inicia a Thread
+    thread_banco.start();
+    thread_app.start();
+    # Aguarda finalizar a Thread
+    thread_app.join();
+    sys.exit(0);
+#-----------------------

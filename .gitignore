@@ -3,6 +3,8 @@
 # Minha Pasta de senhas
 login/
 data/
+data/*.db
+data/database.db
 *.db
 
 
