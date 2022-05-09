@@ -79,6 +79,7 @@ def menu(rastreador:Rastreio=Rastreio(),db:DataBase=DataBase())->None:
                 codigo   = scanf_str(mensagem=mensagem);
                 if(codigo == '-1'):
                     menu(rastreador=rastreador,db=db);
+                    return;
                 codigo   = re.findall(r'(?P<Codigo>[a-z]{2}[0-9]{9}[a-z]{2})',codigo,re.MULTILINE | re.IGNORECASE);
                 if codigo != []:
                     codigo   = str(codigo[0]).upper();
@@ -87,6 +88,7 @@ def menu(rastreador:Rastreio=Rastreio(),db:DataBase=DataBase())->None:
             informacoes = rastreador.rastrear(codigo=codigo);
             tupla = (ID_USER,codigo,nome,informacoes);
             db.insert_rastreio(tupla=tupla);
+            opcao = 0;
         elif(opcao == 2):
             menu_print = (  "Opções de uso:"
                             "\n[1] - Mostar todas as informações"
@@ -109,6 +111,7 @@ def menu(rastreador:Rastreio=Rastreio(),db:DataBase=DataBase())->None:
                     resposta += f"📦 {informacoes} {nome}\n";
             print(resposta);
             pausar_tela();
+            opcao = 0;
         elif(opcao == 3):
             codigo = [];
             resposta = '';
@@ -120,7 +123,6 @@ def menu(rastreador:Rastreio=Rastreio(),db:DataBase=DataBase())->None:
                 codigo   = re.findall(r'(?P<Codigo>[a-z]{2}[0-9]{9}[a-z]{2})',codigo,re.MULTILINE | re.IGNORECASE);
                 if codigo != []:
                     codigo   = str(codigo[0]).upper();
-                
             if(db.verifica_rastreio(id_user=ID_USER,codigo=codigo)):
                 db.delete_rastreio(id_user=ID_USER,codigo=codigo);
                 resposta = f"Encomenda Deletada";
@@ -128,6 +130,7 @@ def menu(rastreador:Rastreio=Rastreio(),db:DataBase=DataBase())->None:
                 resposta = f"Dados Inválidos";
             print(resposta);
             pausar_tela();
+            opcao = 0;
         elif(opcao == 4):
             limpar_tela();
             return;
@@ -137,7 +140,7 @@ def menu(rastreador:Rastreio=Rastreio(),db:DataBase=DataBase())->None:
 if __name__ == '__main__':
     db          = DataBase();
     rastreador  = Rastreio();
-
+    db.creat_table();
     thread_banco = threading.Thread(target=banco, args=(db,rastreador,),daemon=True);
     thread_app   = threading.Thread(target=menu, args=(rastreador,db,));
     # Inicia a Thread
