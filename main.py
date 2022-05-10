@@ -38,26 +38,26 @@ def scanf_str(mensagem:str='')->str:
 
 def banco(db:DataBase=DataBase(),rastreador:Rastreio=Rastreio())->None:
     while True:
-        if(db.validar_rastreio() >= TEMPO_MAXIMO):
+        tempo_banco = db.validar_rastreio();
+        if((tempo_banco) == -1):
+            tempo           = TEMPO_MAXIMO * 60;
+            tempo_de_espera = tempo;
+            if tempo_de_espera > 0:
+                # print(f"Tempo de espera = {tempo_de_espera/60}");
+                time.sleep(tempo_de_espera);
+        elif((tempo_banco/60) >= TEMPO_MAXIMO):
             dados = db.atualiza_rastreio();
             if(dados != []):
                 id_user = dados[0];
                 codigo  = dados[1];
                 informacoes = rastreador.rastrear(codigo=codigo);
                 db.update_rastreio(id_user=id_user,codigo=codigo,informacoes=informacoes);
-        elif(db.validar_rastreio() == 0):
-            tempo_de_espera = TEMPO_MAXIMO * 60;
-            tempo_de_espera = int(tempo_de_espera);
-            # print(f"Tempo de espera = {tempo/60}");
-            for _ in range(tempo_de_espera):
-                time.sleep(1);
         else:
-            tempo = TEMPO_MAXIMO * 60;
-            tempo_de_espera = tempo - (db.validar_rastreio() * 60);
-            tempo_de_espera = int(tempo_de_espera);
-            # print(f"Tempo de espera = {tempo_de_espera/60}");
-            for _ in range(tempo_de_espera):
-                time.sleep(1);
+            tempo           = TEMPO_MAXIMO * 60;
+            tempo_de_espera = tempo - tempo_banco;
+            if tempo_de_espera > 0:
+                # print(f"Tempo de espera = {tempo_de_espera/60}");
+                time.sleep(tempo_de_espera);
 
 def menu(rastreador:Rastreio=Rastreio(),db:DataBase=DataBase())->None:
     while True:

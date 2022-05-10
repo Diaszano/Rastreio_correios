@@ -35,15 +35,15 @@ class DataBase():
         except:
             pass;
 
-    def dif_minutos(self,date1)->int:
+    def dif_minutos(self,date1)->float:
         data_agora = datetime.now();
         date2      = data_agora.strftime('%Y-%m-%d %H:%M:%S');
         d1         = datetime.strptime(date1, '%Y-%m-%d %H:%M:%S');
         d2         = datetime.strptime(date2, '%Y-%m-%d %H:%M:%S');
         resultado  = d2-d1;
-        minutes    = resultado.total_seconds() / 60;
-        minutes    = int(minutes);
-        return abs(minutes);
+        minutes    = resultado.total_seconds();
+        minutes    = float(minutes);
+        return minutes;
     
     def creat_table(self,comando:str='') -> None:
         if(comando == ''):
@@ -199,7 +199,7 @@ class DataBase():
             if Connection:
                 Connection.close();
 
-    def validar_rastreio(self,comando:str='')->int:
+    def validar_rastreio(self,comando:str='')->float:
         if(comando == ''):
             comando =   f'SELECT data FROM encomenda ORDER BY data LIMIT 1';
         try:
@@ -214,12 +214,12 @@ class DataBase():
                 cursor.close();
                 return data;
             cursor.close();
-            return 0;
+            return -1;
         except sqlite3.Error as error:
             print("Falha do comando", error);
             if Connection:
                 Connection.close();
-                return 0;
+                return -1;
         finally:
             if Connection:
                 Connection.close();
