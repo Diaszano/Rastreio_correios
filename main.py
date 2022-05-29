@@ -1,12 +1,13 @@
 #-----------------------
 # BIBLIOTECAS
 #-----------------------
+import re
 import os
 import sys
 import time
 import threading
-from banco.database_sqlite import *
-from rasteador.rastreio_correios import *
+from banco.database_sqlite import DataBaseSqlite as DataBase
+from rasteador.rastreio_correios import Rastreio
 #-----------------------
 # CONSTANTES
 #-----------------------
