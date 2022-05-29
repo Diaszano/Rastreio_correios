@@ -7,7 +7,7 @@ from datetime import datetime
 #-----------------------
 # CLASSES
 #-----------------------
-class DataBase():
+class DataBaseSqlite():
     def __init__(self,nome:str="./data/database.db") -> None:
         arquivo = os.path.basename(nome);
         pasta   = nome.replace(arquivo,'');
@@ -29,13 +29,8 @@ class DataBase():
     def conexao(self) -> None:
         self.connection = sqlite3.connect(self.nome);
     
-    def desconexao(self) -> None:
-        try:
-            self.connection.close();
-        except:
-            pass;
-
-    def dif_minutos(self,date1)->float:
+    @staticmethod
+    def dif_minutos(date1)->float:
         data_agora = datetime.now();
         date2      = data_agora.strftime('%Y-%m-%d %H:%M:%S');
         d1         = datetime.strptime(date1, '%Y-%m-%d %H:%M:%S');
@@ -250,6 +245,6 @@ class DataBase():
 # MAIN()
 #-----------------------
 if(__name__ == "__main__"):
-    db = DataBase();
+    db = DataBaseSqlite();
     db.creat_table();
 #-----------------------

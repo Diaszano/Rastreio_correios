@@ -5,8 +5,8 @@ import os
 import sys
 import time
 import threading
-from database import *
-from rastreio_correios import *
+from banco.database_sqlite import *
+from rasteador.rastreio_correios import *
 #-----------------------
 # CONSTANTES
 #-----------------------
