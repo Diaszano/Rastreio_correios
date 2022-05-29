@@ -52,7 +52,8 @@ def banco(db:DataBase=DataBase(),rastreador:Rastreio=Rastreio())->None:
                 id_user = dados[0];
                 codigo  = dados[1];
                 informacoes = rastreador.rastrear(codigo=codigo);
-                db.update_rastreio(id_user=id_user,codigo=codigo,informacoes=informacoes);
+                db.update_rastreio( id_user=id_user,codigo=codigo,
+                                    informacoes=informacoes);
         else:
             tempo           = TEMPO_MAXIMO * 60;
             tempo_de_espera = tempo - tempo_banco;
@@ -76,12 +77,15 @@ def menu(rastreador:Rastreio=Rastreio(),db:DataBase=DataBase())->None:
         if(opcao == 1):
             codigo = [];
             while(codigo == []):
-                mensagem = "Digite o código de rastreio ou -1 para sair: ";
+                mensagem = ("Digite o código de rastreio ou -1 para "
+                            "sair: ");
                 codigo   = scanf_str(mensagem=mensagem);
                 if(codigo == '-1'):
                     menu(rastreador=rastreador,db=db);
                     return;
-                codigo   = re.findall(r'(?P<Codigo>[a-z]{2}[0-9]{9}[a-z]{2})',codigo,re.MULTILINE | re.IGNORECASE);
+                regex = r'(?P<Codigo>[a-z]{2}[0-9]{9}[a-z]{2})';
+                codigo   = re.findall(  regex,codigo,
+                                        re.MULTILINE|re.IGNORECASE);
                 if codigo != []:
                     codigo   = str(codigo[0]).upper();
             mensagem = "Digite o nome do rastreio: ";
@@ -100,15 +104,21 @@ def menu(rastreador:Rastreio=Rastreio(),db:DataBase=DataBase())->None:
             while(opcao < 1 or opcao > 2):
                 opcao = scanf_int(mensagem=menu_print);
                 limpar_tela();
-            resposta = f"Tu tens 📦 {len(db.select_rastreio(id_user=ID_USER))} encomendas guardadas\n";
+            resposta = (f"Tu tens 📦 "
+                        f"{len(db.select_rastreio(id_user=ID_USER))} "
+                        f"encomendas guardadas\n");
             if(opcao == 1):
                 resposta += f"#-----------------------#\n";
-                for informacoes, nome in db.select_rastreio(id_user=ID_USER):
+                for informacoes, nome in db.select_rastreio(
+                                            id_user=ID_USER):
                     resposta += f"{informacoes} {nome}\n";
                     resposta += f"#-----------------------#\n";
             else:
-                comando = f"SELECT codigo, nome_rastreio FROM encomenda WHERE id_user='{ID_USER}' ORDER BY id";
-                for informacoes, nome in db.select_rastreio(comando=comando):
+                comando = ( f"SELECT codigo, nome_rastreio FROM "
+                            f"encomenda WHERE id_user='{ID_USER}'"
+                            f" ORDER BY id");
+                for informacoes, nome in db.select_rastreio(
+                                            comando=comando):
                     resposta += f"📦 {informacoes} {nome}\n";
             print(resposta);
             pausar_tela();
@@ -117,11 +127,14 @@ def menu(rastreador:Rastreio=Rastreio(),db:DataBase=DataBase())->None:
             codigo = [];
             resposta = '';
             while(codigo == []):
-                mensagem = "Digite o código de rastreio ou -1 para sair: ";
+                mensagem = ("Digite o código de rastreio ou -1 para "
+                            "sair: ");
                 codigo   = scanf_str(mensagem=mensagem);
                 if(codigo == '-1'):
                     menu(rastreador=rastreador,db=db);
-                codigo   = re.findall(r'(?P<Codigo>[a-z]{2}[0-9]{9}[a-z]{2})',codigo,re.MULTILINE | re.IGNORECASE);
+                regex    = r'(?P<Codigo>[a-z]{2}[0-9]{9}[a-z]{2})';
+                codigo   =  re.findall(regex,codigo,
+                            re.MULTILINE|re.IGNORECASE);
                 if codigo != []:
                     codigo   = str(codigo[0]).upper();
             if(db.verifica_rastreio(id_user=ID_USER,codigo=codigo)):
@@ -142,7 +155,9 @@ if __name__ == '__main__':
     db          = DataBase();
     rastreador  = Rastreio();
     db.creat_table();
-    thread_banco = threading.Thread(target=banco, args=(db,rastreador,),daemon=True);
+    thread_banco = threading.Thread(target=banco, 
+                                    args=(db,rastreador,),
+                                    daemon=True);
     thread_app   = threading.Thread(target=menu, args=(rastreador,db,));
     # Inicia a Thread
     thread_banco.start();
