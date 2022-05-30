@@ -8,21 +8,13 @@ from datetime import datetime
 # CLASSES
 #-----------------------
 class DataBaseSqlite():
-    def __init__(self,nome:str="./data/rastreador.db") -> None:
-        arquivo = os.path.basename(nome);
-        pasta   = nome.replace(arquivo,'');
-        if arquivo == '':
-            arquivo = 'rastreador.db';
-        if pasta == '':
-            pasta = './data/';
+    def __init__(self) -> None:
+        caminho = os.path.dirname(os.path.realpath(__file__));
+        pasta   = os.path.join(caminho,"data");
+        arquivo    = "rastreador.db";
         if(not(os.path.exists(pasta))):
             os.mkdir(pasta);
-        if(not('/data/' in pasta)):
-            self.nome = f'{pasta}/data/';
-            os.mkdir(self.nome);
-            self.nome = f'{self.nome}{arquivo}';
-        else:
-            self.nome = nome;
+        self.nome = os.path.join(pasta,arquivo);
         self.__create_table();
         self.__create_index();
     # -----------------------
