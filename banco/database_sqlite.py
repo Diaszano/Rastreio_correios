@@ -50,7 +50,7 @@ class DataBaseSqlite():
         if(comando == ''):
             comando = ( "CREATE TABLE IF NOT EXISTS encomenda("
                         "id	INTEGER PRIMARY KEY AUTOINCREMENT,"
-                        "id_user 		INTEGER NOT NULL,"
+                        "id_user 		TEXT    NOT NULL,"
                         "codigo			TEXT	NOT NULL,"
                         "nome_rastreio	TEXT	NOT NULL,"
                         "dia 			TEXT	NOT NULL,"
@@ -77,8 +77,8 @@ class DataBaseSqlite():
         if(id_user == '' or codigo == ''):
             return False;
         if(comando == ''):
-            comando = ( "SELECT * "
-                        "FROM encomenda "
+            comando = ( f"SELECT * "
+                        f"FROM encomenda "
                         f"WHERE id_user='{id_user}' "
                         f"AND codigo='{codigo}'");
         try:
@@ -231,8 +231,7 @@ class DataBaseSqlite():
                         f"('now','localtime')), " 
                         f"informacoes='{informacoes}' "
                         f"WHERE id_user='{id_user}' AND "
-                        f"codigo='{codigo}'"
-                        );
+                        f"codigo='{codigo}'");
         try:
             Connection = self.__conexao();
             cursor     = Connection.cursor();

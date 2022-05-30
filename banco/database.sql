@@ -5,7 +5,7 @@
 	-- Tabela das Encomenda
 		CREATE TABLE IF NOT EXISTS encomenda(
 			id			 	INTEGER PRIMARY KEY AUTOINCREMENT,
-			id_user 		INTEGER NOT NULL,
+			id_user 		TEXT 	NOT NULL,
 			codigo			TEXT	NOT NULL,
 			nome_rastreio	TEXT	NOT NULL,
 			dia 			TEXT	NOT NULL,

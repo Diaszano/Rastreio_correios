@@ -80,7 +80,7 @@ class Rastreio:
         return '';
     
     def __limparMensagem(self,eventos:list = []) -> list:
-        rastreio          = [];
+        rastreio = [];
         for resultado in eventos:
             dia       = '';
             tipo      = '';
