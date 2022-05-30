@@ -6,13 +6,16 @@ import os
 import sys
 import time
 import threading
-from banco.database_sqlite import DataBaseSqlite as DataBase
-from rasteador.rastreio_correios import Rastreio
+from rasteador import Rastreio
+from banco import DataBaseSqlite
 #-----------------------
 # CONSTANTES
 #-----------------------
 ID_USER = 'User';
 TEMPO_MAXIMO = 2;
+#-----------------------
+# CLASSES
+#-----------------------
 #-----------------------
 # FUNÇÕES
 #-----------------------
@@ -37,7 +40,8 @@ def scanf_str(mensagem:str='')->str:
         valor = scanf_str(mensagem=mensagem);
     return str(valor);
 
-def banco(db:DataBase=DataBase(),rastreador:Rastreio=Rastreio())->None:
+def banco(  db:DataBaseSqlite=DataBaseSqlite(),
+            rastreador:Rastreio=Rastreio())->None:
     while True:
         tempo_banco = db.validar_rastreio();
         if((tempo_banco) == -1):
@@ -61,7 +65,8 @@ def banco(db:DataBase=DataBase(),rastreador:Rastreio=Rastreio())->None:
                 # print(f"Tempo de espera = {tempo_de_espera/60}");
                 time.sleep(tempo_de_espera);
 
-def menu(rastreador:Rastreio=Rastreio(),db:DataBase=DataBase())->None:
+def menu(   rastreador:Rastreio=Rastreio(),
+            db:DataBaseSqlite=DataBaseSqlite())->None:
     while True:
         opcao = 0;
         menu_print = (   "Opções de uso:"
@@ -90,6 +95,13 @@ def menu(rastreador:Rastreio=Rastreio(),db:DataBase=DataBase())->None:
                     codigo   = str(codigo[0]).upper();
             mensagem = "Digite o nome do rastreio: ";
             nome     = scanf_str(mensagem=mensagem);
+            regex = r'(?P<Nome>.{1,30})';
+            nome   = re.findall(regex,nome,
+                                re.MULTILINE|re.IGNORECASE);
+            if nome != []:
+                nome   = str(nome[0]).title();
+            else:
+                nome = "";
             informacoes = rastreador.rastrear(codigo=codigo);
             tupla = (ID_USER,codigo,nome,informacoes);
             db.insert_rastreio(tupla=tupla);
@@ -152,9 +164,8 @@ def menu(rastreador:Rastreio=Rastreio(),db:DataBase=DataBase())->None:
 # Main()
 #----------------------- 
 if __name__ == '__main__':
-    db          = DataBase();
+    db          = DataBaseSqlite();
     rastreador  = Rastreio();
-    db.creat_table();
     thread_banco = threading.Thread(target=banco, 
                                     args=(db,rastreador,),
                                     daemon=True);

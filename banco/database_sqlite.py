@@ -8,11 +8,11 @@ from datetime import datetime
 # CLASSES
 #-----------------------
 class DataBaseSqlite():
-    def __init__(self,nome:str="./data/database.db") -> None:
+    def __init__(self,nome:str="./data/rastreador.db") -> None:
         arquivo = os.path.basename(nome);
         pasta   = nome.replace(arquivo,'');
         if arquivo == '':
-            arquivo = 'database.db';
+            arquivo = 'rastreador.db';
         if pasta == '':
             pasta = './data/';
         if(not(os.path.exists(pasta))):
@@ -23,14 +23,16 @@ class DataBaseSqlite():
             self.nome = f'{self.nome}{arquivo}';
         else:
             self.nome = nome;
+        self.__create_table();
     # -----------------------
     # OUTROS
     # -----------------------
-    def conexao(self) -> None:
-        self.connection = sqlite3.connect(self.nome);
+    def __conexao(self) -> sqlite3.Connection:
+        connection = sqlite3.connect(self.nome);
+        return connection;
     
     @staticmethod
-    def dif_minutos(date1)->float:
+    def __dif_minutos(date1)->float:
         data_agora = datetime.now();
         date2      = data_agora.strftime('%Y-%m-%d %H:%M:%S');
         d1         = datetime.strptime(date1, '%Y-%m-%d %H:%M:%S');
@@ -39,20 +41,28 @@ class DataBaseSqlite():
         minutes    = resultado.total_seconds();
         minutes    = float(minutes);
         return minutes;
-    
-    def creat_table(self,comando:str='') -> None:
+
+    def __create_table(self,comando:str='') -> None:
         if(comando == ''):
-            comando =   """ CREATE TABLE IF NOT EXISTS encomenda(
-                            id              INTEGER primary key autoincrement,
-                            id_user         TEXT NOT NULL,
-                            codigo          TEXT NOT NULL,
-                            nome_rastreio   TEXT,
-                            data            TEXT NOT NULL,
-                            informacoes     TEXT NOT NULL)
-                        """;
+            comando = ( "CREATE TABLE IF NOT EXISTS encomenda( "
+                        "id              INTEGER PRIMARY KEY " 
+                        "autoincrement, "
+                        "id_user         TEXT NOT NULL, " 
+                        "codigo          TEXT NOT NULL, "
+                        "nome_rastreio   TEXT,"
+                        "data            TEXT NOT NULL, "
+                        "informacoes     TEXT NOT NULL) "
+                        );
+            comando = ( "CREATE TABLE IF NOT EXISTS encomenda("
+                        "id	INTEGER PRIMARY KEY AUTOINCREMENT,"
+                        "id_user 		INTEGER NOT NULL,"
+                        "codigo			TEXT	NOT NULL,"
+                        "nome_rastreio	TEXT	NOT NULL,"
+                        "dia 			TEXT	NOT NULL,"
+                        "informacoes    TEXT 	NOT NULL)");
         try:
-            self.conexao();
-            Connection = self.connection;
+            
+            Connection = self.__conexao();
             cursor = Connection.cursor();
             cursor.execute(comando);
             Connection.commit();
@@ -67,20 +77,19 @@ class DataBaseSqlite():
     # -----------------------    
     # RASTREIO
     # -----------------------
-    def verifica_rastreio(self,comando:str='',id_user:str='',codigo:str='')->bool:
+    def verifica_rastreio(  self,comando:str='',
+                            id_user:str='',
+                            codigo:str='')->bool:
         if(id_user == '' or codigo == ''):
             return False;
         if(comando == ''):
-            comando =   f""" 
-                            SELECT *
-                            FROM encomenda
-                            WHERE id_user='{id_user}' 
-                            AND
-                            codigo='{codigo}'
-                        """;
+            comando = ( "SELECT * "
+                        "FROM encomenda "
+                        f"WHERE id_user='{id_user}' "
+                        f"AND codigo='{codigo}'");
         try:
-            self.conexao();
-            Connection = self.connection;
+            
+            Connection = self.__conexao();
             cursor = Connection.cursor();
             cursor.execute(comando);
             tmp = cursor.fetchall();
@@ -100,18 +109,18 @@ class DataBaseSqlite():
     
     def insert_rastreio(self,comando:str='',tupla=[]) -> None:
         if(comando == ''):
-            comando =   """ 
-                            INSERT INTO encomenda
-                            (id_user, codigo, nome_rastreio, 'data', informacoes)
-                            VALUES(?, ?, ?,(SELECT DATETIME('now','localtime')), ?)
-                        """;
+            comando = ( "INSERT INTO encomenda "
+                        "(id_user, codigo, nome_rastreio, "
+                        "dia, informacoes) "
+                        "VALUES(?,?,?,"
+                        "(SELECT DATETIME('now','localtime')), ?) ");
         if(tupla == []):
-            tupla = ('id_user','codigo','nome_rastreio','data','informacoes');
+            tupla = (   'id_user','codigo','nome_rastreio',
+                        'dia','informacoes');
         if(self.verifica_rastreio(id_user=tupla[0],codigo=tupla[1])):
             return;
         try:
-            self.conexao();
-            Connection = self.connection;
+            Connection = self.__conexao();
             cursor = Connection.cursor();
             cursor.execute(comando, tupla);
             Connection.commit();
@@ -124,17 +133,16 @@ class DataBaseSqlite():
             if Connection:
                 Connection.close();
     
-    def delete_rastreio(self,comando:str='',id_user:str='',codigo:str='') -> None:
+    def delete_rastreio(self,comando:str='',id_user:str='',
+                        codigo:str='') -> None:
         if(id_user == '' or codigo == ''):
             return;
         if(comando == ''):
-            comando =   f""" 
-                            DELETE FROM encomenda
-                            WHERE id_user='{id_user}' AND codigo='{codigo}'
-                        """;
+            comando = ( f"DELETE FROM encomenda "
+                        f"WHERE id_user='{id_user}' "
+                        f"AND codigo='{codigo}'");
         try:
-            self.conexao();
-            Connection = self.connection;
+            Connection = self.__conexao();
             cursor = Connection.cursor();
             cursor.execute(comando);
             Connection.commit();
@@ -149,10 +157,11 @@ class DataBaseSqlite():
 
     def select_rastreio(self,comando:str='',id_user:str=''):
         if(comando == ''):
-            comando =   f"SELECT informacoes, nome_rastreio FROM encomenda  WHERE id_user='{id_user}' ORDER BY id";
+            comando = ( f"SELECT informacoes, nome_rastreio "
+                        f"FROM encomenda  WHERE id_user='{id_user}' "
+                        f"ORDER BY id");
         try:
-            self.conexao();
-            Connection = self.connection;
+            Connection = self.__conexao();
             cursor     = Connection.cursor();
             cursor.execute(comando);
             data = cursor.fetchall();
@@ -169,10 +178,11 @@ class DataBaseSqlite():
     
     def atualiza_rastreio(self,comando:str=''):
         if(comando == ''):
-            comando =   f'SELECT id_user, codigo, informacoes, nome_rastreio FROM encomenda ORDER BY data LIMIT 1';
+            comando = ( "SELECT id_user, codigo, informacoes, "
+                        "nome_rastreio FROM encomenda "
+                        "ORDER BY dia LIMIT 1");
         try:
-            self.conexao();
-            Connection = self.connection;
+            Connection = self.__conexao();
             cursor     = Connection.cursor();
             cursor.execute(comando);
             data = cursor.fetchall();
@@ -196,16 +206,16 @@ class DataBaseSqlite():
 
     def validar_rastreio(self,comando:str='')->float:
         if(comando == ''):
-            comando =   f'SELECT data FROM encomenda ORDER BY data LIMIT 1';
+            comando = ( "SELECT dia FROM encomenda "
+                        "ORDER BY dia LIMIT 1");
         try:
-            self.conexao();
-            Connection = self.connection;
+            Connection = self.__conexao();
             cursor     = Connection.cursor();
             cursor.execute(comando);
             data = cursor.fetchall();
             if data != []:
                 data = str(data[0][0]);
-                data = self.dif_minutos(data);
+                data = self.__dif_minutos(data);
                 cursor.close();
                 return data;
             cursor.close();
@@ -219,16 +229,18 @@ class DataBaseSqlite():
             if Connection:
                 Connection.close();
     
-    def update_rastreio(self,id_user:str='',codigo:str='',comando:str='',informacoes:str='') -> bool:
+    def update_rastreio(self,id_user:str='',codigo:str='',
+                        comando:str='',informacoes:str='') -> bool:
         if(comando == ''):
-            comando =   f""" UPDATE encomenda
-                            SET 'data'=(SELECT DATETIME('now','localtime')), 
-                            informacoes='{informacoes}'
-                            WHERE id_user='{id_user}' AND codigo='{codigo}'
-                        """;
+            comando = ( f"UPDATE encomenda "
+                        f"SET dia=(SELECT DATETIME"
+                        f"('now','localtime')), " 
+                        f"informacoes='{informacoes}' "
+                        f"WHERE id_user='{id_user}' AND "
+                        f"codigo='{codigo}'"
+                        );
         try:
-            self.conexao();
-            Connection = self.connection;
+            Connection = self.__conexao();
             cursor     = Connection.cursor();
             cursor.execute(comando);
             Connection.commit();
@@ -245,6 +257,5 @@ class DataBaseSqlite():
 # MAIN()
 #-----------------------
 if(__name__ == "__main__"):
-    db = DataBaseSqlite();
-    db.creat_table();
+    pass;
 #-----------------------

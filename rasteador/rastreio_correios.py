@@ -11,11 +11,47 @@ import requests
 # CLASSES
 #-----------------------
 class Rastreio:
-    @staticmethod
-    def rastrear(codigo:str='')->str:
+    def __init__(self) -> None:
+        regex               = ( r"(?P<Ano>[0-9]{4})(?:\-)"
+                                r"(?P<Mes>[0-9]{2})(?:\-)"
+                                r"(?P<Dia>[0-9]{2})(?:t)"
+                                r"(?P<Hora>[0-9]{1,2})(?:\:)"
+                                r"(?P<Minutos>[0-9]{1,2})(?:.*)");
+        self.__re_dia       = re.compile(   regex,re.MULTILINE|
+                                            re.IGNORECASE);
+        regex               = r'((\"dtHrCriado\"\:)(\".*?\"))';
+        self.__re_data      = re.compile(   regex,re.MULTILINE|
+                                            re.IGNORECASE);
+        regex               = r'((\"tipo\"\:)(\"[^0-9]*?\"))';
+        self.__re_tipo      = re.compile(   regex,re.MULTILINE|
+                                            re.IGNORECASE);
+        regex               = r'((\"detalhe\"\:)(\".*?\"))';
+        self.__re_detalhe   = re.compile(   regex,re.MULTILINE|
+                                            re.IGNORECASE);
+        regex               = r'((\"descricao\"\:)(\".*?\"))';
+        self.__re_descricao = re.compile(   regex,re.MULTILINE|
+                                            re.IGNORECASE);
+        regex               = ( r'(?:\"unidade\"\:\{\"endereco\"\:\{'
+                                r'"cidade"\:)(\".*?\"),(?:\"uf\"\:)'
+                                r'(\".*?\")');
+        self.__re_unidade_1 = re.compile(   regex,re.MULTILINE|
+                                            re.IGNORECASE);
+        regex               = ( r'(?:\"unidade\"\:\{\"codSro\"\:\".*?\"('
+                                r'?:\,)\"endereco\"\:\{\}\,\"nome"\:)'
+                                r'(\".*?\")');
+        self.__re_unidade_2 = re.compile(   regex,re.MULTILINE|
+                                            re.IGNORECASE);
+        regex               = ( r'(?:\"unidadeDestino\"\:\{\"endereco\"\:'
+                                r'\{\"cidade\":)(\".*?\")(?:,\"uf\"\:)'
+                                r'(\".*?\")');
+        self.__re_destino   = re.compile(   regex,re.MULTILINE|
+                                            re.IGNORECASE);
+        
+        
+    def rastrear(self,codigo:str='')->str:
         """Rastrear
         
-        Aqui rastrearemos a encomenda
+        Aqui rastrearemos a encomenda.
         """
         if(len(codigo) != 13):
             return '';
@@ -39,40 +75,12 @@ class Rastreio:
                 informacoes = ( valor 
                                 for valor in informacoes 
                                 if valor != '');
-                informacoes = Rastreio.__limparMensagem(informacoes);
+                informacoes = self.__limparMensagem(informacoes);
                 return informacoes;
         return '';
     
-    @staticmethod
-    def __limparMensagem(eventos:list = []) -> list:
+    def __limparMensagem(self,eventos:list = []) -> list:
         rastreio          = [];
-        regex             = (   r"(?P<Ano>[0-9]{4})(?:\-)"
-                                r"(?P<Mes>[0-9]{2})(?:\-)"
-                                r"(?P<Dia>[0-9]{2})(?:t)"
-                                r"(?P<Hora>[0-9]{1,2})(?:\:)"
-                                r"(?P<Minutos>[0-9]{1,2})(?:.*)");
-        re_dia            = re.compile(regex,re.MULTILINE|re.IGNORECASE);
-        regex             = r'((\"dtHrCriado\"\:)(\".*?\"))';
-        re_data           = re.compile(regex,re.MULTILINE|re.IGNORECASE);
-        regex             = r'((\"tipo\"\:)(\"[^0-9]*?\"))';
-        re_tipo           = re.compile(regex,re.MULTILINE|re.IGNORECASE);
-        regex             = r'((\"detalhe\"\:)(\".*?\"))';
-        re_detalhe        = re.compile(regex,re.MULTILINE|re.IGNORECASE);
-        regex             = r'((\"descricao\"\:)(\".*?\"))';
-        re_descricao      = re.compile(regex,re.MULTILINE|re.IGNORECASE);
-        regex             = (   r'(?:\"unidade\"\:\{\"endereco\"\:\{'
-                                r'"cidade"\:)(\".*?\"),(?:\"uf\"\:)'
-                                r'(\".*?\")');
-        re_unidade_1      = re.compile(regex,re.MULTILINE|re.IGNORECASE);
-        regex             = (   r'(?:\"unidade\"\:\{\"codSro\"\:\".*?\"('
-                                r'?:\,)\"endereco\"\:\{\}\,\"nome"\:)'
-                                r'(\".*?\")');
-        re_unidade_2      = re.compile(regex,re.MULTILINE|re.IGNORECASE);
-        regex             = (   r'(?:\"unidadeDestino\"\:\{\"endereco\"\:'
-                                r'\{\"cidade\":)(\".*?\")(?:,\"uf\"\:)'
-                                r'(\".*?\")');
-        re_unidadeDestino = re.compile(regex,re.MULTILINE|re.IGNORECASE);
-        
         for resultado in eventos:
             dia       = '';
             tipo      = '';
@@ -81,24 +89,24 @@ class Rastreio:
             detalhe   = '';
             descricao = '';
             if 'descricao' in resultado:
-                temp      = re_descricao.findall(resultado);
+                temp      = self.__re_descricao.findall(resultado);
                 temp      = str(temp[0][2]);
                 temp      = temp.replace('"','');
                 descricao = temp;
             if 'detalhe' in resultado:
-                temp    = re_detalhe.findall(resultado);
+                temp    = self.__re_detalhe.findall(resultado);
                 temp    = temp[0][2];
                 temp    = temp.replace('"','');
                 detalhe = f'\n{temp}';
             if 'dtHrCriado' in resultado:
-                temp = re_data.findall(resultado);
+                temp = self.__re_data.findall(resultado);
                 temp = temp[0][2]
                 temp = temp.replace('"','');
                 dia  = temp;
             if 'tipo' in resultado:
-                tipo = re_tipo.findall(resultado);
+                tipo = self.__re_tipo.findall(resultado);
                 if tipo != []:
-                    temp = re_unidade_1.findall(resultado);
+                    temp = self.__re_unidade_1.findall(resultado);
                     if temp != []:
                         temp        = temp[0];
                         [cidade,uf] = [temp[0],temp[1]];
@@ -106,19 +114,19 @@ class Rastreio:
                         cidade      = cidade.replace('"','');
                         local       = f'[{cidade}/{uf}]';
                     else:
-                        temp  = re_unidade_2.findall(resultado);
+                        temp  = self.__re_unidade_2.findall(resultado);
                         if temp != []:
                             temp  = temp[0].replace('"','');
                             local = f'[{temp}]';
             if 'unidadeDestino' in resultado:
-                temp  = re_unidadeDestino.findall(resultado);
+                temp  = self.__re_destino.findall(resultado);
                 if temp != []:
                     temp        = temp[0];
                     [cidade,uf] = [temp[0],temp[1]];
                     uf          = uf.replace('"','');
                     cidade      = cidade.replace('"','');
                     destino     = f' para [{cidade}/{uf}]';
-            mensagem = (    f'[{Rastreio.__limpaData(dia,re_dia)}] - '
+            mensagem = (    f'[{self.__limpaData(dia,self.__re_dia)}] - '
                             f'{descricao} {local}{destino}'
                             f'{detalhe}\n\n\n');
             rastreio.append(mensagem);
