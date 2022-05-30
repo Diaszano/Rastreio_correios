@@ -44,15 +44,6 @@ class DataBaseSqlite():
 
     def __create_table(self,comando:str='') -> None:
         if(comando == ''):
-            comando = ( "CREATE TABLE IF NOT EXISTS encomenda( "
-                        "id              INTEGER PRIMARY KEY " 
-                        "autoincrement, "
-                        "id_user         TEXT NOT NULL, " 
-                        "codigo          TEXT NOT NULL, "
-                        "nome_rastreio   TEXT,"
-                        "data            TEXT NOT NULL, "
-                        "informacoes     TEXT NOT NULL) "
-                        );
             comando = ( "CREATE TABLE IF NOT EXISTS encomenda("
                         "id	INTEGER PRIMARY KEY AUTOINCREMENT,"
                         "id_user 		INTEGER NOT NULL,"
