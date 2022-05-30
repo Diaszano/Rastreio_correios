@@ -24,6 +24,7 @@ class DataBaseSqlite():
         else:
             self.nome = nome;
         self.__create_table();
+        self.__create_index();
     # -----------------------
     # OUTROS
     # -----------------------
@@ -41,7 +42,18 @@ class DataBaseSqlite():
         minutes    = resultado.total_seconds();
         minutes    = float(minutes);
         return minutes;
-
+    
+    def __create_index(self,comandos:str='') -> None:
+        if(comandos == ''):
+            comandos = [("CREATE INDEX IF NOT EXISTS "
+                        "index_encomenda_id_user " 
+                        "ON encomenda(id_user) "),
+                        (   "CREATE INDEX IF NOT EXISTS "
+                            "index_encomenda_codigo "		
+                            "ON encomenda(codigo)")];
+        for comando in comandos:
+            self.__create_table(comando=comando);
+        
     def __create_table(self,comando:str='') -> None:
         if(comando == ''):
             comando = ( "CREATE TABLE IF NOT EXISTS encomenda("
@@ -50,9 +62,8 @@ class DataBaseSqlite():
                         "codigo			TEXT	NOT NULL,"
                         "nome_rastreio	TEXT	NOT NULL,"
                         "dia 			TEXT	NOT NULL,"
-                        "informacoes    TEXT 	NOT NULL)");
+                        "informacoes    TEXT 	NOT NULL) ");
         try:
-            
             Connection = self.__conexao();
             cursor = Connection.cursor();
             cursor.execute(comando);
