@@ -2,7 +2,6 @@
 #-----------------------
 # BIBLIOTECAS
 #-----------------------
-from banco import DataBaseSqlite
 from .rastreio_correios import Rastreio
 #-----------------------
 # CONSTANTES
