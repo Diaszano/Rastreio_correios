@@ -56,8 +56,9 @@ def banco(  db:DataBaseSqlite=DataBaseSqlite(),
                 id_user = dados[0];
                 codigo  = dados[1];
                 informacoes = rastreador.rastrear(codigo=codigo);
-                db.update_rastreio( id_user=id_user,codigo=codigo,
-                                    informacoes=informacoes);
+
+                tupla = (id_user,codigo,informacoes);
+                db.update_rastreio(tupla=tupla);
         else:
             tempo           = TEMPO_MAXIMO * 60;
             tempo_de_espera = tempo - tempo_banco;
@@ -121,17 +122,15 @@ def menu(   rastreador:Rastreio=Rastreio(),
                         f"encomendas guardadas\n");
             if(opcao == 1):
                 resposta += f"#-----------------------#\n";
-                for informacoes, nome in db.select_rastreio(
+                for informacoes, nome, codigo in db.select_rastreio(
                                             id_user=ID_USER):
-                    resposta += f"{informacoes} {nome}\n";
+                    resposta = (f"{informacoes}Encomenda: "
+                                f"{codigo} {nome}\n");
                     resposta += f"#-----------------------#\n";
             else:
-                comando = ( f"SELECT codigo, nome_rastreio FROM "
-                            f"encomenda WHERE id_user='{ID_USER}'"
-                            f" ORDER BY id");
-                for informacoes, nome in db.select_rastreio(
-                                            comando=comando):
-                    resposta += f"📦 {informacoes} {nome}\n";
+                for _ ,nome ,codigo in db.select_rastreio(
+                                            id_user=ID_USER):
+                    resposta += f"📦 {codigo} {nome}\n";
             print(resposta);
             pausar_tela();
             opcao = 0;
@@ -149,8 +148,7 @@ def menu(   rastreador:Rastreio=Rastreio(),
                             re.MULTILINE|re.IGNORECASE);
                 if codigo != []:
                     codigo   = str(codigo[0]).upper();
-            if(db.verifica_rastreio(id_user=ID_USER,codigo=codigo)):
-                db.delete_rastreio(id_user=ID_USER,codigo=codigo);
+            if(db.delete_rastreio(id_user=ID_USER,codigo=codigo)):
                 resposta = f"Encomenda Deletada";
             else:
                 resposta = f"Dados Inválidos";
